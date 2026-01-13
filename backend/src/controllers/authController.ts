@@ -3,14 +3,53 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { userModel } from '../models/userModel';
 
+// Validation de l'email
+const isValidEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+// Validation du mot de passe (12+ caractères, majuscule, minuscule, chiffre, caractère spécial)
+const isValidPassword = (password: string): { valid: boolean; message: string } => {
+  if (password.length < 12) {
+    return { valid: false, message: 'Le mot de passe doit contenir au moins 12 caractères' };
+  }
+  if (!/[A-Z]/.test(password)) {
+    return { valid: false, message: 'Le mot de passe doit contenir au moins une majuscule' };
+  }
+  if (!/[a-z]/.test(password)) {
+    return { valid: false, message: 'Le mot de passe doit contenir au moins une minuscule' };
+  }
+  if (!/[0-9]/.test(password)) {
+    return { valid: false, message: 'Le mot de passe doit contenir au moins un chiffre' };
+  }
+  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+    return { valid: false, message: 'Le mot de passe doit contenir au moins un caractère spécial' };
+  }
+  return { valid: true, message: '' };
+};
+
 export const authController = {
   async register(req: Request, res: Response): Promise<void> {
     try {
       const { email, password, name } = req.body;
 
-      // Validation
+      // Validation des champs requis
       if (!email || !password || !name) {
         res.status(400).json({ error: 'Email, mot de passe et nom sont requis' });
+        return;
+      }
+
+      // Validation de l'email
+      if (!isValidEmail(email)) {
+        res.status(400).json({ error: 'Format d\'email invalide' });
+        return;
+      }
+
+      // Validation du mot de passe
+      const passwordValidation = isValidPassword(password);
+      if (!passwordValidation.valid) {
+        res.status(400).json({ error: passwordValidation.message });
         return;
       }
 
