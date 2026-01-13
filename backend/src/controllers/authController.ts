@@ -122,5 +122,11 @@ export const authController = {
     } catch (error) {
       res.status(500).json({ error: 'Erreur lors de la connexion' });
     }
+  },
+
+  logout(req: Request, res: Response): void {
+    // Avec JWT, la déconnexion se fait côté client en supprimant le token
+    // Cette route sert principalement à confirmer la déconnexion au frontend
+    res.json({ message: 'Déconnexion réussie' });
   }
 };
