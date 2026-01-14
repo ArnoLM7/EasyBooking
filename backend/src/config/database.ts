@@ -4,15 +4,13 @@ import fs from "fs";
 
 const dbPath =
 	process.env.NODE_ENV === "test"
-		? ":memory:"
+		? path.join(__dirname, "../../data/test.db")
 		: path.join(__dirname, "../../data/easybooking.db");
 
-// Créer le dossier data s'il n'existe pas (sauf en mode test avec :memory:)
-if (process.env.NODE_ENV !== "test") {
-	const dataDir = path.dirname(dbPath);
-	if (!fs.existsSync(dataDir)) {
-		fs.mkdirSync(dataDir, { recursive: true });
-	}
+// Créer le dossier data s'il n'existe pas
+const dataDir = path.dirname(dbPath);
+if (!fs.existsSync(dataDir)) {
+	fs.mkdirSync(dataDir, { recursive: true });
 }
 
 const db: Database.Database = new Database(dbPath);
