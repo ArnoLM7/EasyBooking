@@ -6,9 +6,10 @@ import db from "../../src/config/database";
 describe("Auth Integration Tests", () => {
 	beforeEach(() => {
 		// Réinitialiser la base de données avant chaque test
-		db.exec("DELETE FROM reservations");
-		db.exec("DELETE FROM users");
-		db.exec("DELETE FROM rooms");
+		// Drop et recréer les tables pour réinitialiser les IDs auto-incrémentés
+		db.exec("DROP TABLE IF EXISTS reservations");
+		db.exec("DROP TABLE IF EXISTS users");
+		db.exec("DROP TABLE IF EXISTS rooms");
 		initDatabase();
 	});
 
@@ -222,11 +223,29 @@ describe("Auth Integration Tests", () => {
 	});
 
 	describe("POST /api/auth/logout", () => {
-		it("devrait retourner un message de succès", async () => {
-			const response = await request(app).post("/api/auth/logout");
+		it("devrait retourner un message de succès avec un token valide", async () => {
+			// D'abord créer un utilisateur et obtenir un token
+			const registerResponse = await request(app)
+				.post("/api/auth/register")
+				.send({
+					email: "logout@example.com",
+					password: "Password123!@#",
+					name: "Logout User",
+				});
+			const token = registerResponse.body.token;
+
+			const response = await request(app)
+				.post("/api/auth/logout")
+				.set("Authorization", `Bearer ${token}`);
 
 			expect(response.status).toBe(200);
 			expect(response.body).toHaveProperty("message", "Déconnexion réussie");
+		});
+
+		it("devrait retourner 401 sans token", async () => {
+			const response = await request(app).post("/api/auth/logout");
+
+			expect(response.status).toBe(401);
 		});
 	});
 
