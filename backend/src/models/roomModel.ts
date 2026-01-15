@@ -34,5 +34,11 @@ export const roomModel = {
     const stmt = db.prepare(query);
     const result = stmt.get(...params) as { count: number };
     return result.count === 0;
+  },
+
+  delete(id: number): boolean {
+    const stmt = db.prepare('DELETE FROM rooms WHERE id = ?');
+    const result = stmt.run(id);
+    return result.changes > 0;
   }
 };

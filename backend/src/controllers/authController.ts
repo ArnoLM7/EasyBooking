@@ -124,9 +124,57 @@ export const authController = {
     }
   },
 
+<<<<<<< HEAD
   logout(req: Request, res: Response): void {
     // Avec JWT, la déconnexion se fait côté client en supprimant le token
     // Cette route sert principalement à confirmer la déconnexion au frontend
     res.json({ message: 'Déconnexion réussie' });
+=======
+  async updateProfile(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = (req as any).user?.userId;
+      const { name, email } = req.body;
+
+      if (!name || !email) {
+        res.status(400).json({ error: 'Le nom et l\'email sont requis' });
+        return;
+      }
+
+      const existingUser = userModel.findByEmail(email);
+      if (existingUser && existingUser.id !== userId) {
+        res.status(409).json({ error: 'Cet email est déjà utilisé par un autre utilisateur' });
+        return;
+      }
+
+      const updatedUser = userModel.update(userId, name, email);
+      if (!updatedUser) {
+        res.status(404).json({ error: 'Utilisateur non trouvé' });
+        return;
+      }
+
+      res.json({
+        message: 'Profil mis à jour avec succès',
+        user: { id: updatedUser.id, email: updatedUser.email, name: updatedUser.name }
+      });
+    } catch (error) {
+      res.status(500).json({ error: 'Erreur lors de la mise à jour du profil' });
+    }
+  },
+
+  async deleteAccount(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = (req as any).user?.userId;
+
+      const deleted = userModel.delete(userId);
+      if (!deleted) {
+        res.status(404).json({ error: 'Utilisateur non trouvé' });
+        return;
+      }
+
+      res.json({ message: 'Compte supprimé avec succès' });
+    } catch (error) {
+      res.status(500).json({ error: 'Erreur lors de la suppression du compte' });
+    }
+>>>>>>> f61ee60 (ajout de la gestion des salle et du profil, test de performznce avec autocannon)
   }
 };

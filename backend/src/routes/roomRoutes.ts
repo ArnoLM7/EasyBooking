@@ -4,7 +4,9 @@ import { roomController } from "../controllers/roomController";
 const router = Router();
 
 router.get("/", roomController.getAll);
-router.get("/:id", roomController.getById);
+router.post("/", roomController.create);
 router.get("/:id/availability", roomController.checkAvailability);
+router.get("/:id", roomController.getById);
+router.delete("/:id", roomController.delete);
 
 export default router;
