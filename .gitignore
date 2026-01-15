@@ -58,3 +58,5 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+backend/data/*.db
+backend/data/easybooking.db
