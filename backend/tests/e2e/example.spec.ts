@@ -10,6 +10,15 @@ const createTestUser = () => ({
   password: 'TestPassword123!'
 });
 
+// Fonction helper pour générer un créneau horaire unique (évite les conflits entre tests)
+const generateUniqueTimeSlot = () => {
+  // Utilise un hash basé sur le timestamp pour générer une heure unique entre 08:00 et 17:00
+  const uniqueHour = 8 + (Date.now() % 9); // Heure entre 8 et 16
+  const startTime = `${uniqueHour.toString().padStart(2, '0')}:00`;
+  const endTime = `${(uniqueHour + 1).toString().padStart(2, '0')}:00`;
+  return { startTime, endTime };
+};
+
 // Fonction helper pour s'inscrire
 async function registerUser(page: any, user: { name: string; email: string; password: string }) {
   await page.goto(`${BASE_URL}/register`);
@@ -27,6 +36,45 @@ async function loginUser(page: any, user: { email: string; password: string }) {
   await page.getByPlaceholder('Au moins 6 caractères').fill(user.password);
   await page.getByRole('button', { name: /se connecter/i }).click();
   await expect(page).toHaveURL(/\/rooms/, { timeout: 15000 });
+}
+
+// Fonction helper pour sélectionner une date dans le calendrier personnalisé
+async function selectDateInCalendar(page: any, daysFromToday: number) {
+  const targetDate = new Date();
+  targetDate.setDate(targetDate.getDate() + daysFromToday);
+
+  const targetDay = targetDate.getDate();
+  const targetMonth = targetDate.getMonth();
+  const targetYear = targetDate.getFullYear();
+
+  // Obtenir le mois actuellement affiché dans le calendrier
+  const monthNames = [
+    "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+    "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
+  ];
+
+  const targetMonthText = `${monthNames[targetMonth]} ${targetYear}`;
+
+  // Localiser le calendrier dans le modal
+  const calendarContainer = page.locator('.rounded-xl.border-2.border-slate-200.bg-white.p-4.shadow-lg');
+
+  // Naviguer vers le bon mois si nécessaire
+  let attempts = 0;
+  while (attempts < 12) {
+    const currentMonthText = await calendarContainer.locator('.text-center .text-lg.font-bold').textContent();
+    if (currentMonthText?.includes(targetMonthText)) {
+      break;
+    }
+    // Cliquer sur le bouton suivant pour avancer d'un mois (le dernier bouton dans la nav)
+    const nextButton = calendarContainer.locator('.mb-4.flex.items-center.justify-between button').last();
+    await nextButton.click();
+    await page.waitForTimeout(150);
+    attempts++;
+  }
+
+  // Cliquer sur le jour cible - s'assurer qu'il n'est pas désactivé
+  const dayButton = calendarContainer.locator(`.grid.grid-cols-7.gap-1 button:not([disabled]):has-text("${targetDay}")`).first();
+  await dayButton.click();
 }
 
 test.describe('EasyBooking - Tests E2E Complets', () => {
@@ -173,9 +221,13 @@ test.describe('EasyBooking - Tests E2E Complets', () => {
       // Vérifier que le modal est ouvert (heading "Réserver la salle")
       await expect(page.getByRole('heading', { name: /réserver la salle/i })).toBeVisible();
 
-      // Vérifier les champs du formulaire
-      await expect(page.locator('input[type="date"]')).toBeVisible();
+      // Vérifier les champs du formulaire - le calendrier personnalisé et les inputs time
+      await expect(page.locator('text=Date de réservation')).toBeVisible();
       await expect(page.locator('input[type="time"]').first()).toBeVisible();
+
+      // Fermer le modal en cliquant sur le bouton Annuler
+      await page.getByRole('button', { name: 'Annuler' }).click();
+      await expect(page.getByRole('heading', { name: /réserver la salle/i })).not.toBeVisible({ timeout: 3000 });
     });
 
     test('devrait créer une réservation avec succès', async ({ page }) => {
@@ -191,24 +243,22 @@ test.describe('EasyBooking - Tests E2E Complets', () => {
       // Attendre que le modal soit visible
       await expect(page.getByRole('heading', { name: /réserver la salle/i })).toBeVisible();
 
-      // Remplir le formulaire de réservation - utiliser une date dans 10 jours pour éviter les conflits
-      const futureDate = new Date();
-      futureDate.setDate(futureDate.getDate() + 10);
-      const dateStr = futureDate.toISOString().split('T')[0];
+      // Sélectionner une date dans 30 jours via le calendrier personnalisé (plus loin pour éviter conflits)
+      await selectDateInCalendar(page, 30);
 
-      await page.locator('input[type="date"]').fill(dateStr);
-
-      // Heures de début et fin
+      // Heures de début et fin - utiliser un créneau unique
+      const { startTime, endTime } = generateUniqueTimeSlot();
       const timeInputs = page.locator('input[type="time"]');
-      await timeInputs.first().fill('10:00');
-      await timeInputs.last().fill('11:00');
+      await timeInputs.first().fill(startTime);
+      await timeInputs.last().fill(endTime);
 
       // Attendre que le bouton Confirmer soit activé (la vérification est terminée)
       const confirmButton = page.getByRole('button', { name: /confirmer/i });
       await expect(confirmButton).toBeEnabled({ timeout: 15000 });
 
-      // Confirmer la réservation
-      await confirmButton.click();
+      // Faire défiler le modal pour voir le bouton et confirmer la réservation
+      await confirmButton.scrollIntoViewIfNeeded();
+      await confirmButton.click({ force: true });
 
       // Vérifier le succès - le modal se ferme
       await expect(page.getByRole('heading', { name: /réserver la salle/i })).not.toBeVisible({ timeout: 5000 });
@@ -259,23 +309,22 @@ test.describe('EasyBooking - Tests E2E Complets', () => {
       await page.getByRole('button', { name: /réserver/i }).first().click();
       await expect(page.getByRole('heading', { name: /réserver la salle/i })).toBeVisible();
 
-      // Date: dans 15 jours pour éviter les conflits avec les autres tests
-      const futureDate = new Date();
-      futureDate.setDate(futureDate.getDate() + 15);
-      const dateStr = futureDate.toISOString().split('T')[0];
+      // Sélectionner une date dans 45 jours via le calendrier personnalisé (différent du test 4)
+      await selectDateInCalendar(page, 45);
 
-      await page.locator('input[type="date"]').fill(dateStr);
+      // Utiliser un créneau horaire unique
+      const { startTime, endTime } = generateUniqueTimeSlot();
       const timeInputs = page.locator('input[type="time"]');
-      // Utiliser un créneau unique pour éviter les conflits
-      await timeInputs.first().fill('13:00');
-      await timeInputs.last().fill('14:00');
+      await timeInputs.first().fill(startTime);
+      await timeInputs.last().fill(endTime);
 
       // Attendre que le bouton Confirmer soit activé
       const confirmButton = page.getByRole('button', { name: /confirmer/i });
       await expect(confirmButton).toBeEnabled({ timeout: 15000 });
 
-      // Confirmer la réservation
-      await confirmButton.click();
+      // Faire défiler et confirmer la réservation
+      await confirmButton.scrollIntoViewIfNeeded();
+      await confirmButton.click({ force: true });
 
       // Attendre que le modal se ferme
       await expect(page.getByRole('heading', { name: /réserver la salle/i })).not.toBeVisible({ timeout: 5000 });
@@ -361,20 +410,22 @@ test.describe('EasyBooking - Tests E2E Complets', () => {
       await page.getByRole('button', { name: /réserver/i }).first().click();
       await expect(page.getByRole('heading', { name: /réserver la salle/i })).toBeVisible();
 
-      const futureDate = new Date();
-      futureDate.setDate(futureDate.getDate() + 20);
-      const dateStr = futureDate.toISOString().split('T')[0];
+      // Sélectionner une date dans 60 jours via le calendrier personnalisé (différent des autres tests)
+      await selectDateInCalendar(page, 60);
 
-      await page.locator('input[type="date"]').fill(dateStr);
+      // Utiliser un créneau horaire unique
+      const { startTime, endTime } = generateUniqueTimeSlot();
       const timeInputs = page.locator('input[type="time"]');
-      await timeInputs.first().fill('15:00');
-      await timeInputs.last().fill('16:00');
+      await timeInputs.first().fill(startTime);
+      await timeInputs.last().fill(endTime);
 
       // Attendre que le bouton Confirmer soit activé
       const confirmButton = page.getByRole('button', { name: /confirmer/i });
       await expect(confirmButton).toBeEnabled({ timeout: 15000 });
 
-      await confirmButton.click();
+      // Faire défiler et confirmer la réservation
+      await confirmButton.scrollIntoViewIfNeeded();
+      await confirmButton.click({ force: true });
 
       // Attendre que le modal se ferme
       await expect(page.getByRole('heading', { name: /réserver la salle/i })).not.toBeVisible({ timeout: 5000 });
