@@ -59,4 +59,3 @@ Thumbs.db
 .idea/
 *.swp
 backend/data/*.db
-backend/data/easybooking.db
