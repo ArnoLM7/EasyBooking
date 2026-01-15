@@ -1,54 +1,4 @@
 {
-<<<<<<< HEAD
-	"name": "easybooking-backend",
-	"version": "1.0.0",
-	"description": "Backend API pour EasyBooking",
-	"main": "dist/server.js",
-	"scripts": {
-		"dev": "nodemon --exec ts-node src/server.ts",
-		"build": "tsc",
-		"start": "node dist/server.js",
-		"test": "jest",
-		"test:unit": "jest --testPathPatterns=unit",
-		"test:integration": "jest --testPathPatterns=integration",
-		"test:coverage": "jest --coverage",
-		"test:perf": "artillery run tests/performance/load-test.yml"
-	},
-	"keywords": [
-		"booking",
-		"api",
-		"nodejs",
-		"typescript"
-	],
-	"author": "",
-	"license": "ISC",
-	"dependencies": {
-		"bcryptjs": "^3.0.3",
-		"better-sqlite3": "^11.0.0",
-		"cors": "^2.8.5",
-		"dotenv": "^17.2.3",
-		"express": "^5.2.1",
-		"jsonwebtoken": "^9.0.3"
-	},
-	"devDependencies": {
-		"@playwright/test": "^1.57.0",
-		"@types/bcryptjs": "^2.4.6",
-		"@types/better-sqlite3": "^7.6.13",
-		"@types/cors": "^2.8.19",
-		"@types/express": "^5.0.6",
-		"@types/jest": "^30.0.0",
-		"@types/jsonwebtoken": "^9.0.10",
-		"@types/node": "^25.0.6",
-		"@types/supertest": "^6.0.3",
-		"artillery": "^2.0.27",
-		"jest": "^30.2.0",
-		"nodemon": "^3.1.11",
-		"supertest": "^7.2.2",
-		"ts-jest": "^29.4.6",
-		"ts-node": "^10.9.2",
-		"typescript": "^5.9.3"
-	}
-=======
   "name": "backend",
   "version": "1.0.0",
   "description": "",
@@ -84,5 +34,4 @@
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.3"
   }
->>>>>>> f61ee60 (ajout de la gestion des salle et du profil, test de performznce avec autocannon)
 }

@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import type { Room } from "../types";
 import { roomsAPI } from "../services/api";
 import { BookingModal } from "../components/BookingModal";
+import { CreateRoomModal } from "../components/CreateRoomModal";
 
 export const RoomsPage = () => {
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -9,6 +10,8 @@ export const RoomsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [deletingRoomId, setDeletingRoomId] = useState<number | null>(null);
 
   const [selectedCapacities, setSelectedCapacities] = useState<number[]>([]);
   const [selectedEquipments, setSelectedEquipments] = useState<string[]>([]);
@@ -98,6 +101,31 @@ export const RoomsPage = () => {
     alert("Réservation créée avec succès !");
   };
 
+  const handleCreateSuccess = (newRoom: Room) => {
+    setRooms([...rooms, newRoom]);
+    setShowCreateModal(false);
+    alert("Salle créée avec succès !");
+  };
+
+  const handleDeleteRoom = async (roomId: number, roomName: string) => {
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer la salle "${roomName}" ?`)) {
+      return;
+    }
+
+    setDeletingRoomId(roomId);
+    setError("");
+
+    try {
+      await roomsAPI.delete(roomId);
+      setRooms(rooms.filter((room) => room.id !== roomId));
+      alert("Salle supprimée avec succès !");
+    } catch (err: any) {
+      setError(err.response?.data?.error || "Erreur lors de la suppression de la salle");
+    } finally {
+      setDeletingRoomId(null);
+    }
+  };
+
   const getRoomColor = (index: number) => {
     const colors = [
       "from-blue-500 to-cyan-500",
@@ -127,23 +155,39 @@ export const RoomsPage = () => {
   return (
     <div className="space-y-8 animate-fade-in">
       <header className="space-y-2">
-        <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 text-white shadow-lg">
-            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 text-white shadow-lg">
+              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">
+                Salles
+              </p>
+              <h1 className="text-3xl font-bold text-slate-900">Liste des salles</h1>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 px-5 py-3 font-semibold text-white shadow-lg transition-all hover:scale-105 hover:shadow-xl active:scale-95"
+          >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                d="M12 4v16m8-8H4"
               />
             </svg>
-          </div>
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">
-              Salles
-            </p>
-            <h1 className="text-3xl font-bold text-slate-900">Liste des salles</h1>
-          </div>
+            Nouvelle salle
+          </button>
         </div>
         <p className="text-slate-600">
           Consultez les salles disponibles et réservez celle qui vous convient
@@ -382,22 +426,62 @@ export const RoomsPage = () => {
                   </div>
                 </div>
 
-                <button
-                  onClick={() => setSelectedRoom(room)}
-                  className={`w-full rounded-xl bg-gradient-to-r ${getRoomColor(index)} px-4 py-3 font-semibold text-white shadow-lg transition-all hover:scale-105 hover:shadow-xl active:scale-95`}
-                >
-                  <span className="flex items-center justify-center gap-2">
-                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      />
-                    </svg>
-                    Réserver maintenant
-                  </span>
-                </button>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => setSelectedRoom(room)}
+                    className={`w-full rounded-xl bg-gradient-to-r ${getRoomColor(index)} px-4 py-3 font-semibold text-white shadow-lg transition-all hover:scale-105 hover:shadow-xl active:scale-95`}
+                  >
+                    <span className="flex items-center justify-center gap-2">
+                      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
+                      </svg>
+                      Réserver maintenant
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => handleDeleteRoom(room.id, room.name)}
+                    disabled={deletingRoomId === room.id}
+                    className="w-full rounded-xl border-2 border-red-200 bg-white px-4 py-2.5 font-semibold text-red-600 shadow-sm transition-all hover:scale-105 hover:border-red-300 hover:bg-red-50 hover:shadow-md active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
+                  >
+                    {deletingRoomId === room.id ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          />
+                        </svg>
+                        Suppression...
+                      </span>
+                    ) : (
+                      <span className="flex items-center justify-center gap-2">
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
+                        </svg>
+                        Supprimer
+                      </span>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -409,6 +493,13 @@ export const RoomsPage = () => {
           room={selectedRoom}
           onClose={() => setSelectedRoom(null)}
           onSuccess={handleBookingSuccess}
+        />
+      )}
+
+      {showCreateModal && (
+        <CreateRoomModal
+          onClose={() => setShowCreateModal(false)}
+          onSuccess={handleCreateSuccess}
         />
       )}
     </div>
