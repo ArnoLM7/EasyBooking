@@ -49,7 +49,6 @@ export const roomController = {
 				return;
 			}
 
-<<<<<<< HEAD
 			const isAvailable = roomModel.isAvailable(
 				id,
 				startTime as string,
@@ -62,13 +61,6 @@ export const roomController = {
 				.json({ error: "Erreur lors de la vérification de disponibilité" });
 		}
 	},
-=======
-      const isAvailable = roomModel.isAvailable(id, startTime as string, endTime as string);
-      res.json({ roomId: id, isAvailable, startTime, endTime });
-    } catch (error) {
-      res.status(500).json({ error: 'Erreur lors de la vérification de disponibilité' });
-    }
-  },
 
   create(req: Request, res: Response): void {
     try {
@@ -109,5 +101,4 @@ export const roomController = {
       res.status(500).json({ error: 'Erreur lors de la suppression de la salle' });
     }
   }
->>>>>>> f61ee60 (ajout de la gestion des salle et du profil, test de performznce avec autocannon)
 };

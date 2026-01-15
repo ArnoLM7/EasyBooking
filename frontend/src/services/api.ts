@@ -12,6 +12,9 @@ const API_BASE_URL =
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
 export const setAuthToken = (token?: string | null) => {
@@ -38,6 +41,17 @@ export const authAPI = {
     });
     return data;
   },
+  updateProfile: async (name: string, email: string) => {
+    const { data } = await api.put<{ message: string; user: AuthUser }>("/auth/profile", {
+      name,
+      email,
+    });
+    return data;
+  },
+  deleteAccount: async () => {
+    const { data } = await api.delete<{ message: string }>("/auth/account");
+    return data;
+  },
 };
 
 export const roomsAPI = {
@@ -56,6 +70,14 @@ export const roomsAPI = {
         params: { startTime, endTime },
       }
     );
+    return data;
+  },
+  create: async (roomData: { name: string; capacity: number; equipment: string | null }) => {
+    const { data } = await api.post<Room>("/rooms", roomData);
+    return data;
+  },
+  delete: async (id: number) => {
+    const { data } = await api.delete<{ message: string }>(`/rooms/${id}`);
     return data;
   },
 };

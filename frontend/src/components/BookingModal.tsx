@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import type { Room } from "../types";
 import { roomsAPI, reservationsAPI } from "../services/api";
+import { Calendar } from "./Calendar";
 
 type BookingModalProps = {
   room: Room;
@@ -178,7 +179,7 @@ export const BookingModal = ({ room, onClose, onSuccess }: BookingModalProps) =>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-700">
+            <label className="mb-3 flex items-center gap-2 text-sm font-medium text-slate-700">
               <svg className="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
@@ -189,13 +190,10 @@ export const BookingModal = ({ room, onClose, onSuccess }: BookingModalProps) =>
               </svg>
               Date de réservation
             </label>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              min={today}
-              required
-              className="w-full rounded-lg border-2 border-slate-300 bg-white px-4 py-3 shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+            <Calendar
+              selectedDate={startDate}
+              onSelectDate={setStartDate}
+              minDate={today}
             />
           </div>
 
