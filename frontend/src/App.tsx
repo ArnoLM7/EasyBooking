@@ -6,6 +6,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { MyReservationsPage } from "./pages/MyReservationsPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { RoomsPage } from "./pages/RoomsPage";
+import { ProfilePage } from "./pages/ProfilePage";
 
 function App() {
   return (
@@ -30,6 +31,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <MyReservationsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
               </ProtectedRoute>
             }
           />

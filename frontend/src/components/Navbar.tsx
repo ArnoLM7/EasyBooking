@@ -5,6 +5,7 @@ const navLinks = [
   { to: "/", label: "Accueil", requiresAuth: false },
   { to: "/rooms", label: "Salles", requiresAuth: true },
   { to: "/reservations", label: "Mes réservations", requiresAuth: true },
+  { to: "/profile", label: "Profil", requiresAuth: true },
 ];
 
 export const Navbar = () => {
