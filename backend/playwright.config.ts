@@ -45,4 +45,13 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
+
+  /* Run the frontend dev server before starting the tests */
+  webServer: {
+    command: 'npm run dev',
+    cwd: '../frontend',
+    url: 'http://localhost:5173',
+    reuseExistingServer: !process.env.CI,
+    timeout: 120000,
+  },
 });

@@ -18,10 +18,10 @@ test.describe('EasyBooking - Tests E2E Complets', () => {
       await page.goto(`${BASE_URL}/register`);
 
       // Vérifier les éléments de la page
-      await expect(page.getByRole('heading', { name: /créer un compte/i })).toBeVisible();
-      await expect(page.getByPlaceholder(/nom/i)).toBeVisible();
-      await expect(page.getByPlaceholder(/email/i)).toBeVisible();
-      await expect(page.getByPlaceholder(/mot de passe/i)).toBeVisible();
+      await expect(page.getByRole('heading', { name: /bienvenue/i })).toBeVisible();
+      await expect(page.getByPlaceholder('Alex Dupont')).toBeVisible();
+      await expect(page.getByPlaceholder('ton@email.com')).toBeVisible();
+      await expect(page.getByPlaceholder('Au moins 6 caractères')).toBeVisible();
     });
 
     test('devrait afficher une erreur si les champs sont invalides', async ({ page }) => {
